@@ -8,7 +8,14 @@ Ubuntu Indicator to display net usage and speed on Unity taskbar.
 
 ### To Run
 ```
-nohup python net.py &
+$ nohup python net.py &
+//Output will be
+$ nohup: ignoring input and appending output to ‘nohup.out’
+//press enter and you can exit the terminal
+```
+### To stop
+```
+$ killall python
 ```
 
 ### Result
