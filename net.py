@@ -17,7 +17,8 @@ class pythonNet:
         self.indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         
         self.transfer_rate = deque(maxlen=1)
-        self.t = threading.Thread(target=self.calc_ul_dl, args=(self.transfer_rate,))
+        self.total_usage = deque(maxlen=1)
+        self.t = threading.Thread(target=self.calc_ul_dl, args=(self.transfer_rate,self.total_usage,))
         self.t.daemon = True
         self.t.start()
         self.indicator.set_menu(self.build_menu())
@@ -25,16 +26,19 @@ class pythonNet:
         self.indicator.set_label("Detecting..","Speed")
         GLib.timeout_add(500, self.setLabel)
         
-    def setMenuLabel(self, item_upload, item_download):
+    def setMenuLabel(self, item_upload, item_download, item_tot_upload, item_tot_download):
         item_upload.set_label(self.print_upload(self.transfer_rate))
         item_download.set_label(self.print_download(self.transfer_rate))
+        item_tot_upload.set_label(self.print_upload_size(self.total_usage))
+        item_tot_download.set_label(self.print_download_size(self.total_usage))
         return True
 
 
-    def calc_ul_dl(self,rate, dt=0.5, interface='wlan0'):
+    def calc_ul_dl(self,rate,total_use, dt=0.5, interface='wlan0'):
         t0 = time.time()
         counter = psutil.net_io_counters(pernic=True)[interface]
         tot = (counter.bytes_sent, counter.bytes_recv)
+        total_use.append((counter.bytes_sent/(1024*1024), counter.bytes_recv/(1024*1024)))
 
         while True:
             last_tot = tot
@@ -42,6 +46,7 @@ class pythonNet:
             counter = psutil.net_io_counters(pernic=True)[interface]
             t1 = time.time()
             tot = (counter.bytes_sent, counter.bytes_recv)
+            total_use.append((counter.bytes_sent/(1024*1024), counter.bytes_recv/(1024*1024)))
             ul, dl = [(now - last) / (t1 - t0) / 1000.0
                       for now, last in zip(tot, last_tot)]
             rate.append((ul, dl))
@@ -66,6 +71,18 @@ class pythonNet:
         except IndexError:
             return 'Detecting..'
 
+    def print_upload_size(self,rate):
+        try:
+            return ('Up Size: {0:.1f}MB').format(*rate[-1])
+        except IndexError:
+            return 'Detecting'
+
+    def print_download_size(self,rate):
+        try:
+            return ('Down Size: {1:.1f}MB').format(*rate[-1])
+        except IndexError:
+            return 'Detecting..'
+
     def build_menu(self):
         menu = gtk.Menu()
 
@@ -75,12 +92,18 @@ class pythonNet:
         item_download = gtk.MenuItem('Down_Speed')
         menu.append(item_download)
 
+        item_tot_upload = gtk.MenuItem('Upload_Size')
+        menu.append(item_tot_upload)
+
+        item_tot_download = gtk.MenuItem('Download_Size')
+        menu.append(item_tot_download)
+
         item_quit = gtk.MenuItem('Quit')
         item_quit.connect('activate', self.quit)
         menu.append(item_quit)
 
         menu.show_all()
-        GLib.timeout_add(500, self.setMenuLabel,item_upload, item_download)
+        GLib.timeout_add(500, self.setMenuLabel,item_upload, item_download, item_tot_upload, item_tot_download)
         return menu
 
     def quit(self,source):
