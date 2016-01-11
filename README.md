@@ -19,7 +19,10 @@ $ killall python
 ```
 
 ### Result
-![alt tag](https://raw.githubusercontent.com/shubhodeep9/python-netstat/master/screenshots/python-netstat.png)
+![alt tag](https://raw.githubusercontent.com/shubhodeep9/python-netstat/master/screenshots/python-netstat.png) <br />
+Menu:<br />
+![alt tab](https://raw.githubusercontent.com/shubhodeep9/python-netstat/master/screenshots/menuItems1.png)
+
 
 ### To-Do
 Add features like total net usage, and alert on certain limit.
