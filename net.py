@@ -15,16 +15,23 @@ class pythonNet:
         APPINDICATOR_ID = 'myappindicator'
         self.indicator = AppIndicator.Indicator.new(APPINDICATOR_ID, 'network-transmit-receive', AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        self.indicator.set_menu(self.build_menu())
+        
         self.transfer_rate = deque(maxlen=1)
         self.t = threading.Thread(target=self.calc_ul_dl, args=(self.transfer_rate,))
         self.t.daemon = True
         self.t.start()
-        self.indicator.set_label("Detecting..","Speed")
-        GLib.timeout_add_seconds(2, self.setLabel)
+        self.indicator.set_menu(self.build_menu())
         
+        self.indicator.set_label("Detecting..","Speed")
+        GLib.timeout_add(500, self.setLabel)
+        
+    def setMenuLabel(self, item_upload, item_download):
+        item_upload.set_label(self.print_upload(self.transfer_rate))
+        item_download.set_label(self.print_download(self.transfer_rate))
+        return True
 
-    def calc_ul_dl(self,rate, dt=3, interface='wlan0'):
+
+    def calc_ul_dl(self,rate, dt=0.5, interface='wlan0'):
         t0 = time.time()
         counter = psutil.net_io_counters(pernic=True)[interface]
         tot = (counter.bytes_sent, counter.bytes_recv)
@@ -47,12 +54,33 @@ class pythonNet:
         except IndexError:
             return 'Detecting...'
 
+    def print_upload(self,rate):
+        try:
+            return ('Upload: {0:.1f}kB/s').format(*rate[-1])
+        except IndexError:
+            return 'Detecting..'
+
+    def print_download(self,rate):
+        try:
+            return ('Download: {1:.1f}kB/s').format(*rate[-1])
+        except IndexError:
+            return 'Detecting..'
+
     def build_menu(self):
         menu = gtk.Menu()
+
+        item_upload = gtk.MenuItem('Up_Speed')
+        menu.append(item_upload)
+
+        item_download = gtk.MenuItem('Down_Speed')
+        menu.append(item_download)
+
         item_quit = gtk.MenuItem('Quit')
         item_quit.connect('activate', self.quit)
         menu.append(item_quit)
+
         menu.show_all()
+        GLib.timeout_add(500, self.setMenuLabel,item_upload, item_download)
         return menu
 
     def quit(self,source):
