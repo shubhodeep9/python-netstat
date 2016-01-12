@@ -4,3 +4,6 @@
 
 (net.py:5893): Gdk-WARNING **: net.py: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.
 
+
+(net.py:7840): Gdk-WARNING **: net.py: Fatal IO error 11 (Resource temporarily unavailable) on X server :0.
+
