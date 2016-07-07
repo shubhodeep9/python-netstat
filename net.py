@@ -2,14 +2,18 @@ import threading
 from collections import deque
 import time
 import psutil
-import signal
+import signal, gi
 from gi.repository import GLib
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 try:
+    gi.require_version('AppIndicator3', '0.1')
     from gi.repository import AppIndicator3 as AppIndicator
 except:
     from gi.repository import AppIndicator
 
+
+__version__ = '0.1.0'
 class pythonNet:
     def __init__(self):
         APPINDICATOR_ID = 'myappindicator'
@@ -34,7 +38,7 @@ class pythonNet:
         return True
 
 
-    def calc_ul_dl(self,rate,total_use, dt=0.5, interface='wlan0'):
+    def calc_ul_dl(self,rate,total_use, dt=0.5, interface='wlo1'):
         t0 = time.time()
         counter = psutil.net_io_counters(pernic=True)[interface]
         tot = (counter.bytes_sent, counter.bytes_recv)
@@ -113,7 +117,10 @@ class pythonNet:
         self.indicator.set_label(self.print_rate(self.transfer_rate),"Speed")
         return True
 
-if __name__ == '__main__':
+def main():
     ob = pythonNet()
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     gtk.main()
+
+if __name__ == '__main__':
+    main()

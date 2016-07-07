@@ -1,1 +1,0 @@
-nohup python python-netstat/net.py &
