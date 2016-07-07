@@ -10,6 +10,11 @@ Requirements:
 1. Ubuntu OS
 2. Python 2.6 or higher
 
+Change log
+----------
+
+- Implicit network interface selection
+
 Install
 -------
 
