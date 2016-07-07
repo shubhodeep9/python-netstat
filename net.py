@@ -3,6 +3,7 @@ from collections import deque
 import time
 import psutil
 import signal, gi
+import netifaces
 from gi.repository import GLib
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
@@ -19,15 +20,13 @@ class pythonNet:
         APPINDICATOR_ID = 'myappindicator'
         self.indicator = AppIndicator.Indicator.new(APPINDICATOR_ID, 'network-transmit-receive', AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        
         self.transfer_rate = deque(maxlen=1)
         self.total_usage = deque(maxlen=1)
         self.t = threading.Thread(target=self.calc_ul_dl, args=(self.transfer_rate,self.total_usage,))
         self.t.daemon = True
         self.t.start()
         self.indicator.set_menu(self.build_menu())
-        
-        self.indicator.set_label("Detecting..","Speed")
+        self.indicator.set_label("Connect to internet","Speed")
         GLib.timeout_add(500, self.setLabel)
         
     def setMenuLabel(self, item_upload, item_download, item_tot_upload, item_tot_download):
@@ -38,7 +37,9 @@ class pythonNet:
         return True
 
 
-    def calc_ul_dl(self,rate,total_use, dt=0.5, interface='wlo1'):
+    def calc_ul_dl(self,rate,total_use, dt=0.5):
+        active = netifaces.gateways()
+        interface = active['default'][netifaces.AF_INET][1]
         t0 = time.time()
         counter = psutil.net_io_counters(pernic=True)[interface]
         tot = (counter.bytes_sent, counter.bytes_recv)
@@ -58,10 +59,13 @@ class pythonNet:
 
 
     def print_rate(self,rate):
-        try:
-            return (u'\u25b4'+'{0:.1f}kB/s '+u'\u25be'+'{1:.1f}kB/s').format(*rate[-1])
-        except IndexError:
-            return 'Detecting...'
+        if len(netifaces.gateways()['default']):
+            try:
+                return (u'\u25b4'+'{0:.1f}kB/s '+u'\u25be'+'{1:.1f}kB/s').format(*rate[-1])
+            except IndexError:
+                return 'Detecting...'
+        else:
+            return 'Connect to internet'
 
     def print_upload(self,rate):
         try:
@@ -107,14 +111,16 @@ class pythonNet:
         menu.append(item_quit)
 
         menu.show_all()
-        GLib.timeout_add(500, self.setMenuLabel,item_upload, item_download, item_tot_upload, item_tot_download)
+        if netifaces.gateways()['default']:
+            GLib.timeout_add(500, self.setMenuLabel,item_upload, item_download, item_tot_upload, item_tot_download)
         return menu
 
     def quit(self,source):
         gtk.main_quit()
         
     def setLabel(self):
-        self.indicator.set_label(self.print_rate(self.transfer_rate),"Speed")
+        if netifaces.gateways()['default']:
+            self.indicator.set_label(self.print_rate(self.transfer_rate),"Speed")
         return True
 
 def main():
