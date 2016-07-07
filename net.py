@@ -14,7 +14,7 @@ except:
     from gi.repository import AppIndicator
 
 
-__version__ = '0.1.1'
+__version__ = '0.1.3'
 class pythonNet:
     def __init__(self):
         APPINDICATOR_ID = 'myappindicator'

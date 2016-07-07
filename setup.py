@@ -42,7 +42,7 @@ setup(
     author_email='shubhodeep9@gmail.com',
     url='https://github.com/shubhodeep9/python-netstat',
     license='Apache License, Version 2.0',
-    install_requires=["psutil==4.3.0"],
+    install_requires=["psutil==4.3.0","netifaces==0.10.4"],
     py_modules=["net"],
     entry_points={
         'console_scripts': [
